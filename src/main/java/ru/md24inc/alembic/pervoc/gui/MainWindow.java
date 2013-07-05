@@ -146,6 +146,7 @@ public class MainWindow extends Application {
         cards = FXCollections.observableList(Lists.newArrayList(new Card()));
         tableOfCards.setItems(cards);
         tableOfCards.getColumns().setAll(createColumns());
+        tableOfCards.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 //        tableOfCards.addKeyListener(new KeyListener() {
 
 //            @Override
@@ -168,7 +169,6 @@ public class MainWindow extends Application {
 //            }
 //        });
 //        tableOfCards.addComponentListener((ComponentListener) transcriptPanel);
-//        tableOfCards.setFillsViewportHeight(true);
         return tableOfCards;
     }
 
