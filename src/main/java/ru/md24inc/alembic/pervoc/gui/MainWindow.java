@@ -34,7 +34,7 @@ public class MainWindow extends Application {
 
     private FileChooser fj;
     private TableView<Card> tableOfCards = new TableView<Card>();
-    private ObservableList<Card> cards;
+    private ObservableList<Card> cards = FXCollections.observableArrayList();
     private TranscriptPanel transcriptPanel = new TranscriptPanel();
 
     public static void main(String[] args) {
@@ -143,7 +143,6 @@ public class MainWindow extends Application {
     }
 
     private Node createCardsScrollPane() {
-        cards = FXCollections.observableList(Lists.newArrayList(new Card()));
         tableOfCards.setItems(cards);
         tableOfCards.getColumns().setAll(createColumns());
         tableOfCards.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
