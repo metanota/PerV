@@ -8,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCombination;
@@ -141,7 +142,7 @@ public class MainWindow extends Application {
                 .build();
     }
 
-    private ScrollPane createCardsScrollPane() {
+    private Node createCardsScrollPane() {
         cards = FXCollections.observableList(Lists.newArrayList(new Card()));
         tableOfCards.setItems(cards);
         tableOfCards.getColumns().setAll(createColumns());
@@ -168,7 +169,7 @@ public class MainWindow extends Application {
 //        });
 //        tableOfCards.addComponentListener((ComponentListener) transcriptPanel);
 //        tableOfCards.setFillsViewportHeight(true);
-        return ScrollPaneBuilder.create().content(tableOfCards).build();
+        return tableOfCards;
     }
 
     private TranscriptPanel createTranscriptPanel() {
