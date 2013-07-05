@@ -2,6 +2,8 @@ package ru.md24inc.alembic.pervoc.gui;
 
 import com.google.common.collect.Lists;
 import javafx.application.Application;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -14,6 +16,7 @@ import javafx.scene.layout.BorderPaneBuilder;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooserBuilder;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import ru.md24inc.alembic.pervoc.dao.VocabularyDao;
 import ru.md24inc.alembic.pervoc.domains.Card;
 
@@ -26,6 +29,7 @@ import java.util.*;
 public class MainWindow extends Application {
     public static final int MIN_WIDTH = 300;
     public static final int MIN_HEIGHT = 450;
+    public static final int COLUMN_COUNT = 3;
 
     private FileChooser fj;
     private TableView<Card> tableOfCards = new TableView<Card>();
@@ -174,12 +178,30 @@ public class MainWindow extends Application {
     }
 
     private static Collection<TableColumn<Card, String>> createColumns() {
-        final Collection<TableColumn<Card,String>> columns = Lists.newArrayList();
+        final Collection<TableColumn<Card,String>> columns = Lists.newArrayListWithCapacity(COLUMN_COUNT);
         columns.add(TableColumnBuilder.<Card, String> create().text("Word")
+                .cellValueFactory(new Callback<TableColumn.CellDataFeatures<Card, String>, ObservableValue<String>>() {
+                    @Override
+                    public ObservableValue<String> call(TableColumn.CellDataFeatures<Card, String> card) {
+                        return new ReadOnlyObjectWrapper<String>(card.getValue().getWord().getValue());
+                    }
+                })
                 .build());
-        columns.add(TableColumnBuilder.<Card, String> create().text("Transcript")
+        columns.add(TableColumnBuilder.<Card, String>create().text("Transcript")
+                .cellValueFactory(new Callback<TableColumn.CellDataFeatures<Card, String>, ObservableValue<String>>() {
+                    @Override
+                    public ObservableValue<String> call(TableColumn.CellDataFeatures<Card, String> card) {
+                        return new ReadOnlyObjectWrapper<String>(card.getValue().getTranscript().getValue());
+                    }
+                })
                 .build());
-        columns.add(TableColumnBuilder.<Card, String> create().text("Translation")
+        columns.add(TableColumnBuilder.<Card, String>create().text("Translation")
+                .cellValueFactory(new Callback<TableColumn.CellDataFeatures<Card, String>, ObservableValue<String>>() {
+                    @Override
+                    public ObservableValue<String> call(TableColumn.CellDataFeatures<Card, String> card) {
+                        return new ReadOnlyObjectWrapper<String>(card.getValue().getTranslation().getValue());
+                    }
+                })
                 .build());
         return columns;
     }
