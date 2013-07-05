@@ -1,178 +1,170 @@
 package ru.md24inc.alembic.pervoc.gui;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.Lists;
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderPaneBuilder;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooserBuilder;
+import javafx.stage.Stage;
 import ru.md24inc.alembic.pervoc.dao.VocabularyDao;
 import ru.md24inc.alembic.pervoc.domains.Card;
 
-import javax.swing.*;
-import javax.swing.event.TableModelListener;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.*;
 import java.io.File;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author miroque
  */
-public class MainWindow extends JFrame {
-    private JFileChooser fj = new JFileChooser();
-    private JTable tableOfCards = new JTable();
-    private File file;
-    private List<Card> cards = new ArrayList<Card>();
+public class MainWindow extends Application {
+    public static final int MIN_WIDTH = 300;
+    public static final int MIN_HEIGHT = 450;
+
+    private FileChooser fj;
+    private TableView<Card> tableOfCards = new TableView<Card>();
+    private ObservableList<Card> cards;
     private TranscriptPanel transcriptPanel = new TranscriptPanel();
 
-    /**
-     * Creates new form MainWindow
-     */
-    public MainWindow() {
-        initComponents();
-    }
-
     public static void main(String[] args) {
-        // Schedule a job for the event-dispatching thread:
-        // creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new MainWindow().setVisible(true);
-            }
-        });
+        launch(args);
     }
 
-    private void initComponents() {
-        // Creating main frame and giving it title
-        // Personal Vocabular with def.action on exit.
-        setTitle("Personal Vocabulary (version 0.10)");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+    @Override
+    public void start(Stage stage) throws Exception {
 
-        // Making min. and max sizes.
-        setMinimumSize(new Dimension(300, 450));
-        // max size not set
+        final BorderPane bp = BorderPaneBuilder.create()
+                .top(createTranscriptPanel())
+                .center(createCardsScrollPane())
+                .build();
 
-        // Creating bar for menu
-        setJMenuBar(createMenuBar());
+        final BorderPane bp2 = BorderPaneBuilder.create()
+                .top(createMenuBar())
+                .center(bp)
+                .build();
 
-        // Creating and Adding Table with Vocabulary into main Frame
-        add(BorderLayout.CENTER, createCardsScrollPane());
-        add(BorderLayout.NORTH, createTranscriptPanel());
-
-        setVisible(true);
+        stage.setScene(new Scene(bp2));
+        stage.setWidth(MIN_WIDTH);
+        stage.setMinWidth(MIN_WIDTH);
+        stage.setHeight(MIN_HEIGHT);
+        stage.setMinHeight(MIN_HEIGHT);
+        stage.setTitle("Personal Vocabulary (version 0.10)");
+        stage.show();
     }
 
-    private JMenuBar createMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
-        menuBar.add(createFileMenu());
-        menuBar.add(createViewsMenu());
-        return menuBar;
+    private MenuBar createMenuBar() {
+        return MenuBarBuilder.create()
+                .menus(createFileMenu(),
+                        createViewsMenu())
+                .build();
     }
 
-    private JMenu createFileMenu() {
-        JMenu menuFile = new JMenu("File");
-        menuFile.add(createOpenMenuItem());
-        menuFile.add(createSaveMenuItem());
-        menuFile.add(new JPopupMenu.Separator());
-        menuFile.add(createQuitMenuItem());
-        return menuFile;
+    private Menu createFileMenu() {
+        return MenuBuilder.create()
+                .text("File")
+                .items(createOpenMenuItem(),
+                        createSaveMenuItem(),
+                        new SeparatorMenuItem(),
+                        createQuitMenuItem())
+                .build();
     }
 
-    private JMenuItem createQuitMenuItem() {
-        JMenuItem menuFileItemQuit = new JMenuItem("Quit");
-        menuFileItemQuit.setAccelerator(KeyStroke.getKeyStroke(
-                KeyEvent.VK_Q,
-                InputEvent.CTRL_MASK));
-        menuFileItemQuit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
-        });
-        return menuFileItemQuit;
+    private MenuItem createQuitMenuItem() {
+        return MenuItemBuilder.create()
+                .text("Quit")
+                .accelerator(KeyCombination.keyCombination("Ctrl+Q"))
+                .onAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        System.exit(0); // FIXME wrong way to close
+                    }
+                })
+                .build();
     }
 
-    private JMenuItem createSaveMenuItem() {
-        JMenuItem menuFileItemSave = new JMenuItem("Save...");
-        menuFileItemSave.setAccelerator(KeyStroke.getKeyStroke(
-                KeyEvent.VK_S,
-                InputEvent.CTRL_MASK));
-        return menuFileItemSave;
+    private MenuItem createSaveMenuItem() {
+        return MenuItemBuilder.create()
+                .text("Save...")
+                .accelerator(KeyCombination.keyCombination("Ctrl+S"))
+                .build();
     }
 
-    private JMenuItem createOpenMenuItem() {
-        JMenuItem menuFileItemOpen = new JMenuItem("Open...");
-        menuFileItemOpen.setAccelerator(KeyStroke.getKeyStroke(
-                KeyEvent.VK_O,
-                InputEvent.CTRL_MASK));
-        menuFileItemOpen.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fj.addChoosableFileFilter(new FileNameExtensionFilter("Personal Vocabular Files", "pvoc"));
-                fj.setAcceptAllFileFilterUsed(false);
-                if (fj.showDialog(null, "Открыть файл") == JFileChooser.APPROVE_OPTION) {
-                    file = fj.getSelectedFile();
-                    cards = new VocabularyDao().getVocabular(file.toString());
-                    TableModel model = new CardTableModel(cards);
-                    tableOfCards.setModel(model);
-                    System.out.println("File - " + file.toString());
-                    System.out.println(cards.size());
-                }
-            }
-        });
-        return menuFileItemOpen;
+    private Menu createViewsMenu() {
+        return MenuBuilder.create()
+                .text("Views")
+                .items(createTranscriptMenuItem())
+                .build();
     }
 
-    private JMenu createViewsMenu() {
-        JMenu menuViews = new JMenu("Views");
-        menuViews.add(createTranscriptMenuItem());
-        return menuViews;
+    private MenuItem createOpenMenuItem() {
+        fj = FileChooserBuilder.create()
+                .extensionFilters(new FileChooser.ExtensionFilter("Personal Vocabular Files", "*.pvoc"))
+                .build();
+        return MenuItemBuilder.create()
+                .text("Open...")
+                .accelerator(KeyCombination.keyCombination("Ctrl+O"))
+                .onAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        File file = fj.showOpenDialog(null);
+                        if (file == null) {
+                            return;
+                        }
+                        cards.setAll(new VocabularyDao().getVocabular(file.toString()));
+                        System.out.println("File - " + file.toString());
+                        System.out.println(cards.size());
+                    }
+                })
+                .build();
     }
 
-    private JMenuItem createTranscriptMenuItem() {
-        JMenuItem menuViewsItemTscript = new JMenuItem("Transcript");
-        menuViewsItemTscript.setAccelerator(KeyStroke.getKeyStroke(
-                KeyEvent.VK_T,
-                InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
-        menuViewsItemTscript.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                transcriptPanel.setVisible(!transcriptPanel.isVisible());
-            }
-        });
-        return menuViewsItemTscript;
+    private MenuItem createTranscriptMenuItem() {
+        return MenuItemBuilder.create()
+                .text("Transcript")
+                .accelerator(KeyCombination.keyCombination("Ctrl+Shift+T"))
+                .onAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        transcriptPanel.setVisible(!transcriptPanel.isVisible());
+                    }
+                })
+                .build();
     }
 
-    private JScrollPane createCardsScrollPane() {
-        cards.add(new Card());
-        tableOfCards.setModel(new CardTableModel(cards));
-        tableOfCards.setAutoCreateColumnsFromModel(true);
-        tableOfCards.addKeyListener(new KeyListener() {
+    private ScrollPane createCardsScrollPane() {
+        cards = FXCollections.observableList(Lists.newArrayList(new Card()));
+        tableOfCards.setItems(cards);
+        tableOfCards.getColumns().setAll(createColumns());
+//        tableOfCards.addKeyListener(new KeyListener() {
 
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
+//            @Override
+//            public void keyTyped(KeyEvent e) {
+//            }
 
-            @Override
-            public void keyReleased(KeyEvent e) {
-            }
+//            @Override
+//            public void keyReleased(KeyEvent e) {
+//            }
 
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_INSERT) {
-                    cards.add(new Card());
-                    tableOfCards.repaint();
+//            @Override
+//            public void keyPressed(KeyEvent e) {
+//                if (e.getKeyCode() == KeyEvent.VK_INSERT) {
+//                    cards.add(new Card());
+//                    tableOfCards.repaint();
 //					scrollPaneForTableVoc.repaint();
-                    System.out.println(cards.size());
+//                    System.out.println(cards.size());
 
-                }
-            }
-        });
-        tableOfCards.addComponentListener((ComponentListener) transcriptPanel);
-        tableOfCards.setFillsViewportHeight(true);
-        return new JScrollPane(tableOfCards);
+//                }
+//            }
+//        });
+//        tableOfCards.addComponentListener((ComponentListener) transcriptPanel);
+//        tableOfCards.setFillsViewportHeight(true);
+        return ScrollPaneBuilder.create().content(tableOfCards).build();
     }
 
     private TranscriptPanel createTranscriptPanel() {
@@ -181,65 +173,14 @@ public class MainWindow extends JFrame {
         return transcriptPanel;
     }
 
-    private static class CardTableModel implements TableModel {
-
-        private Set<TableModelListener> listeners = new HashSet<TableModelListener>();
-        private static final Map<Integer, ColumnType> index2column = ImmutableMap.<Integer, ColumnType> builder()
-                .put(0, ColumnType.WORD)
-                .put(1, ColumnType.TRANSCRIPT)
-                .put(2, ColumnType.TRANSLATION)
-                .build();
-        private List<Card> beans;
-
-        public CardTableModel(List<Card> beans) {
-            this.beans = beans;
-        }
-
-        @Override
-        public void addTableModelListener(TableModelListener listener) {
-            listeners.add(listener);
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return index2column.get(columnIndex).getClazz();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return index2column.size();
-        }
-
-        @Override
-        public String getColumnName(int columnIndex) {
-            return index2column.get(columnIndex).getName();
-        }
-
-        @Override
-        public int getRowCount() {
-            return beans.size();
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            Card bean = beans.get(rowIndex);
-            return index2column.get(columnIndex).getValue(bean);
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return true;
-        }
-
-        @Override
-        public void removeTableModelListener(TableModelListener listener) {
-            listeners.remove(listener);
-        }
-
-        @Override
-        public void setValueAt(Object value, int rowIndex, int columnIndex) {
-            beans.set(rowIndex, (Card) value);
-//			 fireTableCellUpdated(rowIndex, columnIndex);
-        }
+    private static Collection<TableColumn<Card, String>> createColumns() {
+        final Collection<TableColumn<Card,String>> columns = Lists.newArrayList();
+        columns.add(TableColumnBuilder.<Card, String> create().text("Word")
+                .build());
+        columns.add(TableColumnBuilder.<Card, String> create().text("Transcript")
+                .build());
+        columns.add(TableColumnBuilder.<Card, String> create().text("Translation")
+                .build());
+        return columns;
     }
 }
