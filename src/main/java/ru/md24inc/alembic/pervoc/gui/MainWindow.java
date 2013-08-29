@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import ru.md24inc.alembic.pervoc.dao.VocabularyDao;
 import ru.md24inc.alembic.pervoc.domains.Card;
+import ru.md24inc.alembic.pervoc.domains.Vocabulary;
 
 import java.io.File;
 import java.util.*;
@@ -36,6 +37,7 @@ public class MainWindow extends Application {
     private TableView<Card> tableOfCards = new TableView<Card>();
     private ObservableList<Card> cards = FXCollections.observableArrayList();
     private TranscriptPanel transcriptPanel = new TranscriptPanel();
+    private Vocabulary vocabulary;
 
     public static void main(String[] args) {
         launch(args);
@@ -73,10 +75,61 @@ public class MainWindow extends Application {
     private Menu createFileMenu() {
         return MenuBuilder.create()
                 .text("File")
-                .items(createOpenMenuItem(),
+                .items(createNewMenuItem(),
+                        createOpenMenuItem(),
                         createSaveMenuItem(),
                         new SeparatorMenuItem(),
                         createQuitMenuItem())
+                .build();
+    }
+
+    private MenuItem createNewMenuItem() {
+        return MenuItemBuilder.create()
+                .text("New")
+                .accelerator(KeyCombination.keyCombination("Ctrl+N"))
+                .onAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        cards.add(new Card());
+                    }
+                })
+                .build();
+    }
+
+    private MenuItem createOpenMenuItem() {
+        fj = FileChooserBuilder.create()
+                .extensionFilters(new FileChooser.ExtensionFilter("Personal Vocabular Files", "*.pvoc"))
+                .build();
+        return MenuItemBuilder.create()
+                .text("Open...")
+                .accelerator(KeyCombination.keyCombination("Ctrl+O"))
+                .onAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        final File file = fj.showOpenDialog(null);
+                        if (file == null) {
+                            return;
+                        }
+                        cards.setAll(new VocabularyDao().getVocabular(file.toString()).getCards());
+                    }
+                })
+                .build();
+    }
+
+    private MenuItem createSaveMenuItem() {
+        return MenuItemBuilder.create()
+                .text("Save...")
+                .accelerator(KeyCombination.keyCombination("Ctrl+S"))
+                .onAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        final File file = fj.showSaveDialog(null);
+                        if (file == null) {
+                            return;
+                        }
+                        new VocabularyDao().saveVocabularToFile(vocabulary, file.getAbsolutePath());
+                    }
+                })
                 .build();
     }
 
@@ -93,39 +146,10 @@ public class MainWindow extends Application {
                 .build();
     }
 
-    private MenuItem createSaveMenuItem() {
-        return MenuItemBuilder.create()
-                .text("Save...")
-                .accelerator(KeyCombination.keyCombination("Ctrl+S"))
-                .build();
-    }
-
     private Menu createViewsMenu() {
         return MenuBuilder.create()
                 .text("Views")
                 .items(createTranscriptMenuItem())
-                .build();
-    }
-
-    private MenuItem createOpenMenuItem() {
-        fj = FileChooserBuilder.create()
-                .extensionFilters(new FileChooser.ExtensionFilter("Personal Vocabular Files", "*.pvoc"))
-                .build();
-        return MenuItemBuilder.create()
-                .text("Open...")
-                .accelerator(KeyCombination.keyCombination("Ctrl+O"))
-                .onAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent actionEvent) {
-                        File file = fj.showOpenDialog(null);
-                        if (file == null) {
-                            return;
-                        }
-                        cards.setAll(new VocabularyDao().getVocabular(file.toString()));
-                        System.out.println("File - " + file.toString());
-                        System.out.println(cards.size());
-                    }
-                })
                 .build();
     }
 

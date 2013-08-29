@@ -8,6 +8,8 @@
 
 package ru.md24inc.alembic.pervoc.domains;
 
+import java.util.GregorianCalendar;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -58,8 +60,13 @@ public class Card {
     	word.setValue(string);
     	transcript.setValue(string2);
     	translation.setValue(string3);
+    	date = new GregorianCalendar().getTime().toString();
 	}
     public Card() {
+    	word.setValue("");
+    	transcript.setValue("");
+    	translation.setValue("");
+    	date = new GregorianCalendar().getTime().toString();
     }
 
 	/**

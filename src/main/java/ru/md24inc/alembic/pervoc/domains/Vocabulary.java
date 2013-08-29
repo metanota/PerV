@@ -67,11 +67,11 @@ public class Vocabulary {
      * 
      * 
      */
-    public List<Card> getCard() {
+    public List<Card> getCards() {
         if (card == null) {
             card = new ArrayList<Card>();
         }
         return this.card;
     }
-
+    
 }
