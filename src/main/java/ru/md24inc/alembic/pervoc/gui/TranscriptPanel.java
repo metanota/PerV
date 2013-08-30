@@ -1,18 +1,21 @@
 package ru.md24inc.alembic.pervoc.gui;
 
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.List;
 
 import javafx.scene.Node;
-import javafx.scene.Parent;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.GridPaneBuilder;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 
-public class TranscriptPanel extends Parent /*extends JPanel*/ {
-    private static final long serialVersionUID = -7784099290733841692L;
+public class TranscriptPanel extends BorderPane {
 
     List<Object> consonants;
     List<Object> vowels;
@@ -21,6 +24,7 @@ public class TranscriptPanel extends Parent /*extends JPanel*/ {
 
     public TranscriptPanel() {
         initSymbols();
+        setVisible(false);
     }
 
     private void initSymbols() {
@@ -40,51 +44,57 @@ public class TranscriptPanel extends Parent /*extends JPanel*/ {
         vowels = mxconf.getList("Vowels.symbol");
         special = mxconf.getList("Special.symbol");
 
-//        add(new SymbolRow("Consonants", consonants, new Color(0, 0, 150)));
+        setTop(new SymbolRow("Consonants", consonants, Color.rgb(0, 0, 150)));
 //        add(Box.createRigidArea(new Dimension(0, 10)));
-//        add(new SymbolRow("Vowels", vowels, new Color(150, 0, 0)));
+        setCenter(new SymbolRow("Vowels", vowels, Color.rgb(150, 0, 0)));
 //        add(Box.createRigidArea(new Dimension(0, 10)));
-//        add(new SymbolRow("Special", special, new Color(93, 62, 0)));
+        setBottom(new SymbolRow("Special", special, Color.rgb(93, 62, 0)));
     }
 
-//    class SymbolRow extends JPanel implements MouseListener {
+    private static class SymbolRow extends BorderPane {
 //        Border fronties = BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1);
 
-//        public SymbolRow(String h, List<Object> in, Color color) {
+        public SymbolRow(String h, List<Object> in, Color color) {
 //            setLayout(new BorderLayout(5, 5));
 
-//            JPanel headerPanel = new JPanel();
-//            headerPanel.add(new JLabel(h));
-//            add(headerPanel, BorderLayout.WEST);
+            setLeft(new Label(h));
 
-//            JPanel symbolsPanel = new JPanel(new GridLayout(0, 10, 2, 2));
-//            for (Object ob : in) {
-//                symbolsPanel.add(createSymbolLabel(ob, color));
-//            }
-//            add(symbolsPanel, BorderLayout.CENTER);
-//        }
+            GridPane symbolsPanel = GridPaneBuilder.create()
+                    .hgap(2)
+                    .vgap(2)
+                    .build();
 
-//        private JLabel createSymbolLabel(Object ob, Color color) {
-//            JLabel symbolsHolder = new JLabel(ob.toString());
-//            symbolsHolder.setBorder(fronties);
-//            symbolsHolder.setForeground(color);
-//            symbolsHolder.setToolTipText("Here will be hint");
-//            symbolsHolder.addMouseListener(this);
-//            symbolsHolder.setHorizontalAlignment(JLabel.CENTER);
-//            symbolsHolder.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 16));
-//            return symbolsHolder;
-//        }
+            int i = 0;
+            for (Object ob : in) {
+                Node symbol = createSymbolLabel(ob, color);
+                symbolsPanel.add(symbol, 10 - (i % 10), i / 10); // FIXME math magic! ;)
+                i++;
+            }
+
+            setCenter(symbolsPanel);
+        }
+
+        private Node createSymbolLabel(Object ob, Color color) {
+            Text symbol = new Text(ob.toString());
+//            symbol.setStyle("-fx-border-color: black;");
+//            symbol.setBorder(fronties);
+            symbol.setFill(color);
+//            symbol.setToolTipText("Here will be hint");
+            symbol.setTextAlignment(TextAlignment.CENTER);
+            symbol.setFont(Font.font("SansSerif", 16));
+            return symbol;
+
+//            Pane p = new Pane();
+//            p.setStyle("-fx-border-color: black;");
+//            p.getChildren().add(symbol);
+//            return p;
+        }
 
 //        @Override
 //        public void mouseClicked(MouseEvent e) {
 //            JLabel ex = (JLabel) e.getComponent();
 //            System.out.print(ex.getText() + " ");
 //            typeInActiveCell(ex);
-//        }
-
-//        @Override
-//        public void mouseEntered(MouseEvent e) {
-    // TODO Auto-generated method stub
 //        }
 
 //        private void typeInActiveCell(JLabel ex) {
@@ -98,28 +108,13 @@ public class TranscriptPanel extends Parent /*extends JPanel*/ {
             }
             typeIn.repaint();*/
 //        }
-
-//        @Override
-//        public void mouseExited(MouseEvent e) {
-    // TODO Auto-generated method stub
-//        }
-
-//        @Override
-//        public void mousePressed(MouseEvent e) {
-    // TODO Auto-generated method stub
-//        }
-
-//        @Override
-//        public void mouseReleased(MouseEvent e) {
-    // TODO Auto-generated method stub
-//        }
-//    }
-
-    public void paintComponent(Graphics g) {
-
     }
 
     public void addTypeIn(Node typeIn){
         this.typeIn = typeIn;
+    }
+
+    public void toggleVisibility() {
+        setVisible(!isVisible());
     }
 }

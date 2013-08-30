@@ -33,7 +33,9 @@ public class MainWindow extends Application {
     public static final int MIN_HEIGHT = 450;
     public static final int COLUMN_COUNT = 3;
 
-    private FileChooser fj;
+    private FileChooser fj = FileChooserBuilder.create()
+            .extensionFilters(new FileChooser.ExtensionFilter("Personal Vocabular Files", "*.pvoc"))
+            .build();
     private TableView<Card> tableOfCards = new TableView<Card>();
     private ObservableList<Card> cards = FXCollections.observableArrayList();
     private TranscriptPanel transcriptPanel = new TranscriptPanel();
@@ -91,15 +93,14 @@ public class MainWindow extends Application {
                     @Override
                     public void handle(ActionEvent actionEvent) {
                         cards.add(new Card());
+                        // TODO fill card with data
+                        // TODO save card in vocabulary
                     }
                 })
                 .build();
     }
 
     private MenuItem createOpenMenuItem() {
-        fj = FileChooserBuilder.create()
-                .extensionFilters(new FileChooser.ExtensionFilter("Personal Vocabular Files", "*.pvoc"))
-                .build();
         return MenuItemBuilder.create()
                 .text("Open...")
                 .accelerator(KeyCombination.keyCombination("Ctrl+O"))
@@ -160,7 +161,7 @@ public class MainWindow extends Application {
                 .onAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent actionEvent) {
-                        transcriptPanel.setVisible(!transcriptPanel.isVisible());
+                        transcriptPanel.toggleVisibility();
                     }
                 })
                 .build();
@@ -170,37 +171,15 @@ public class MainWindow extends Application {
         tableOfCards.setItems(cards);
         tableOfCards.getColumns().setAll(createColumns());
         tableOfCards.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-//        tableOfCards.addKeyListener(new KeyListener() {
-
-//            @Override
-//            public void keyTyped(KeyEvent e) {
-//            }
-
-//            @Override
-//            public void keyReleased(KeyEvent e) {
-//            }
-
-//            @Override
-//            public void keyPressed(KeyEvent e) {
-//                if (e.getKeyCode() == KeyEvent.VK_INSERT) {
-//                    cards.add(new Card());
-//                    tableOfCards.repaint();
-//					scrollPaneForTableVoc.repaint();
-//                    System.out.println(cards.size());
-
-//                }
-//            }
-//        });
-//        tableOfCards.addComponentListener((ComponentListener) transcriptPanel);
         return tableOfCards;
     }
 
     private TranscriptPanel createTranscriptPanel() {
-        transcriptPanel.setVisible(false);
         transcriptPanel.addTypeIn(tableOfCards);
         return transcriptPanel;
     }
 
+    // strange architecture, drives me a little insane
     private static Collection<TableColumn<Card, String>> createColumns() {
         final Collection<TableColumn<Card,String>> columns = Lists.newArrayListWithCapacity(COLUMN_COUNT);
         columns.add(TableColumnBuilder.<Card, String> create().text("Word")
